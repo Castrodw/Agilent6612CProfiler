@@ -1,0 +1,11 @@
+SERIAL_PORT = "COM16"
+
+BAUDRATE = 9600
+
+MAX_POINTS = 3000
+
+POLL_INTERVAL = 0.05
+
+CSV_LOGGING = True
+
+CSV_FILENAME = "power_profile.csv"
