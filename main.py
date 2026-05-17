@@ -1,6 +1,7 @@
 import sys
 import time
 from collections import deque
+from datetime import datetime
 
 import numpy as np
 import pyqtgraph as pg
@@ -111,10 +112,44 @@ controls = ControlPanel(worker)
 status = QtWidgets.QLabel()
 
 # -----------------------------
+# RESET / SAVE BUTTONS
+# -----------------------------
+btn_reset = QtWidgets.QPushButton("Reset Graph")
+btn_save  = QtWidgets.QPushButton("Save Graph")
+
+btn_row = QtWidgets.QWidget()
+btn_layout = QtWidgets.QHBoxLayout()
+btn_layout.setContentsMargins(0, 0, 0, 0)
+btn_layout.addWidget(btn_reset)
+btn_layout.addWidget(btn_save)
+btn_layout.addStretch()
+btn_row.setLayout(btn_layout)
+
+def reset_graph():
+    global start_time
+    times.clear()
+    voltages.clear()
+    currents.clear()
+    start_time = time.time()
+    curve_v.setData([], [])
+    curve_c.setData([], [])
+    status.setText("Graph reset.")
+
+def save_graph():
+    filename = f"graph_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    save_path = f"C:\\Agilent6612CProfiler\\{filename}"
+    graphics.grab().save(save_path)
+    status.setText(f"Saved: {filename}")
+
+btn_reset.clicked.connect(reset_graph)
+btn_save.clicked.connect(save_graph)
+
+# -----------------------------
 # LAYOUT
 # -----------------------------
 layout.addWidget(graphics)
 layout.addWidget(controls)
+layout.addWidget(btn_row)
 layout.addWidget(status)
 
 central.setLayout(layout)
