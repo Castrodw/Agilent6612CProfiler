@@ -23,6 +23,7 @@ voltages = deque(maxlen=config.MAX_POINTS)
 currents = deque(maxlen=config.MAX_POINTS)
 
 start_time = time.time()
+_status_lock_until = 0.0
 
 # -----------------------------
 # LOGGER
@@ -152,11 +153,14 @@ def _build_csv_comparison(filepath):
     import csv as _csv
 
     elapsed, v_data, c_data = [], [], []
-    with open(filepath, newline='') as f:
-        for row in _csv.DictReader(f):
-            elapsed.append(float(row['elapsed_seconds']))
-            v_data.append(float(row['voltage']))
-            c_data.append(float(row['current']))
+    try:
+        with open(filepath, newline='') as f:
+            for row in _csv.DictReader(f):
+                elapsed.append(float(row['elapsed_seconds']))
+                v_data.append(float(row['voltage']))
+                c_data.append(float(row['current']))
+    except KeyError as e:
+        raise ValueError(f"CSV must have columns: elapsed_seconds, voltage, current (missing: {e})")
 
     if not elapsed:
         raise ValueError("CSV contains no data rows.")
@@ -202,7 +206,7 @@ def _build_image_comparison(filepath):
         raise ValueError(f"Could not load image: {filepath}")
     img_label = QtWidgets.QLabel()
     img_label.setPixmap(
-        pixmap.scaledToWidth(1200, QtCore.Qt.SmoothTransformation)
+        pixmap.scaledToWidth(min(1200, pixmap.width()), QtCore.Qt.SmoothTransformation)
     )
     img_label.setAlignment(QtCore.Qt.AlignCenter)
     vbox.addWidget(img_label)
@@ -218,19 +222,21 @@ def _clear_comparison_widgets():
             w.deleteLater()
 
 def load_comparison():
+    global _status_lock_until
     filepath, _ = QtWidgets.QFileDialog.getOpenFileName(
         window,
         "Load Comparison File",
         "",
-        "Data & Images (*.csv *.png *.jpg *.bmp *.gif);;"
+        "Data & Images (*.csv *.png *.jpg *.jpeg *.bmp *.gif);;"
         "CSV Files (*.csv);;"
-        "Images (*.png *.jpg *.bmp *.gif)"
+        "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
     )
     if not filepath:
         return
 
     fmt = _detect_format(filepath)
     if fmt is None:
+        _status_lock_until = time.time() + 3.0
         status.setText("Unsupported file type — previous comparison unchanged.")
         return
 
@@ -242,34 +248,41 @@ def load_comparison():
         else:
             widget = _build_image_comparison(filepath)
     except Exception as e:
+        _status_lock_until = time.time() + 3.0
         status.setText(f"Error loading file: {e}")
         return
 
     comparison_layout.addWidget(widget)
     comparison_container.show()
     btn_clear_comparison.show()
+    _status_lock_until = time.time() + 3.0
     status.setText(f"Loaded: {os.path.basename(filepath)}")
 
 def clear_comparison():
+    global _status_lock_until
     _clear_comparison_widgets()
     comparison_container.hide()
     btn_clear_comparison.hide()
+    _status_lock_until = time.time() + 3.0
     status.setText("Comparison cleared.")
 
 def reset_graph():
-    global start_time
+    global start_time, _status_lock_until
     times.clear()
     voltages.clear()
     currents.clear()
     start_time = time.time()
     curve_v.setData([], [])
     curve_c.setData([], [])
+    _status_lock_until = time.time() + 3.0
     status.setText("Graph reset.")
 
 def save_graph():
+    global _status_lock_until
     filename = f"graph_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-    save_path = f"C:\\Agilent6612CProfiler\\{filename}"
+    save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
     graphics.grab().save(save_path)
+    _status_lock_until = time.time() + 3.0
     status.setText(f"Saved: {filename}")
 
 btn_reset.clicked.connect(reset_graph)
@@ -317,10 +330,11 @@ def update():
     plot_v.setXRange(xmin, xmax, padding=0)
     plot_c.setXRange(xmin, xmax, padding=0)
 
-    status.setText(
-        f"Voltage: {voltages[-1]:.3f} V  "
-        f"Current: {currents[-1]:.3f} A"
-    )
+    if time.time() >= _status_lock_until:
+        status.setText(
+            f"Voltage: {voltages[-1]:.3f} V  "
+            f"Current: {currents[-1]:.3f} A"
+        )
 
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
