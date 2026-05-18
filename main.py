@@ -137,6 +137,17 @@ comparison_layout.setContentsMargins(0, 0, 0, 0)
 comparison_container.setLayout(comparison_layout)
 comparison_container.hide()
 
+# -----------------------------
+# FORMAT DETECTION
+# -----------------------------
+def _detect_format(filepath):
+    ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ''
+    if ext == 'csv':
+        return 'csv'
+    if ext in ('png', 'jpg', 'jpeg', 'bmp', 'gif'):
+        return 'image'
+    return None
+
 def reset_graph():
     global start_time
     times.clear()
