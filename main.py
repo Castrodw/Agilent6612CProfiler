@@ -186,6 +186,25 @@ def _build_csv_comparison(filepath):
     container.setLayout(vbox)
     return container
 
+def _build_image_comparison(filepath):
+    container = QtWidgets.QWidget()
+    vbox = QtWidgets.QVBoxLayout()
+    vbox.setContentsMargins(0, 4, 0, 0)
+
+    header = QtWidgets.QLabel(f"Comparison: {os.path.basename(filepath)}")
+    vbox.addWidget(header)
+
+    pixmap = QtGui.QPixmap(filepath)
+    img_label = QtWidgets.QLabel()
+    img_label.setPixmap(
+        pixmap.scaledToWidth(1200, QtCore.Qt.SmoothTransformation)
+    )
+    img_label.setAlignment(QtCore.Qt.AlignCenter)
+    vbox.addWidget(img_label)
+
+    container.setLayout(vbox)
+    return container
+
 def reset_graph():
     global start_time
     times.clear()
