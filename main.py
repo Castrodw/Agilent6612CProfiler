@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 from collections import deque
@@ -6,7 +7,7 @@ from datetime import datetime
 import numpy as np
 import pyqtgraph as pg
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from serial_worker import SerialWorker
 from logger import CSVLogger
@@ -114,16 +115,27 @@ status = QtWidgets.QLabel()
 # -----------------------------
 # RESET / SAVE BUTTONS
 # -----------------------------
-btn_reset = QtWidgets.QPushButton("Reset Graph")
-btn_save  = QtWidgets.QPushButton("Save Graph")
+btn_reset            = QtWidgets.QPushButton("Reset Graph")
+btn_save             = QtWidgets.QPushButton("Save Graph")
+btn_load_comparison  = QtWidgets.QPushButton("Load Comparison")
+btn_clear_comparison = QtWidgets.QPushButton("Clear Comparison")
+btn_clear_comparison.hide()
 
 btn_row = QtWidgets.QWidget()
 btn_layout = QtWidgets.QHBoxLayout()
 btn_layout.setContentsMargins(0, 0, 0, 0)
 btn_layout.addWidget(btn_reset)
 btn_layout.addWidget(btn_save)
+btn_layout.addWidget(btn_load_comparison)
+btn_layout.addWidget(btn_clear_comparison)
 btn_layout.addStretch()
 btn_row.setLayout(btn_layout)
+
+comparison_container = QtWidgets.QWidget()
+comparison_layout    = QtWidgets.QVBoxLayout()
+comparison_layout.setContentsMargins(0, 0, 0, 0)
+comparison_container.setLayout(comparison_layout)
+comparison_container.hide()
 
 def reset_graph():
     global start_time
@@ -150,6 +162,7 @@ btn_save.clicked.connect(save_graph)
 layout.addWidget(graphics)
 layout.addWidget(controls)
 layout.addWidget(btn_row)
+layout.addWidget(comparison_container)
 layout.addWidget(status)
 
 central.setLayout(layout)
