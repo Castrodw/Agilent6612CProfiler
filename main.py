@@ -205,6 +205,52 @@ def _build_image_comparison(filepath):
     container.setLayout(vbox)
     return container
 
+def _clear_comparison_widgets():
+    while comparison_layout.count():
+        item = comparison_layout.takeAt(0)
+        w = item.widget()
+        if w:
+            w.deleteLater()
+
+def load_comparison():
+    filepath, _ = QtWidgets.QFileDialog.getOpenFileName(
+        window,
+        "Load Comparison File",
+        "",
+        "Data & Images (*.csv *.png *.jpg *.bmp *.gif);;"
+        "CSV Files (*.csv);;"
+        "Images (*.png *.jpg *.bmp *.gif)"
+    )
+    if not filepath:
+        return
+
+    fmt = _detect_format(filepath)
+    if fmt is None:
+        status.setText("Unsupported file type.")
+        return
+
+    _clear_comparison_widgets()
+
+    try:
+        if fmt == 'csv':
+            widget = _build_csv_comparison(filepath)
+        else:
+            widget = _build_image_comparison(filepath)
+    except Exception as e:
+        status.setText(f"Error loading file: {e}")
+        return
+
+    comparison_layout.addWidget(widget)
+    comparison_container.show()
+    btn_clear_comparison.show()
+    status.setText(f"Loaded: {os.path.basename(filepath)}")
+
+def clear_comparison():
+    _clear_comparison_widgets()
+    comparison_container.hide()
+    btn_clear_comparison.hide()
+    status.setText("Comparison cleared.")
+
 def reset_graph():
     global start_time
     times.clear()
@@ -223,6 +269,8 @@ def save_graph():
 
 btn_reset.clicked.connect(reset_graph)
 btn_save.clicked.connect(save_graph)
+btn_load_comparison.clicked.connect(load_comparison)
+btn_clear_comparison.clicked.connect(clear_comparison)
 
 # -----------------------------
 # LAYOUT
