@@ -158,6 +158,9 @@ def _build_csv_comparison(filepath):
             v_data.append(float(row['voltage']))
             c_data.append(float(row['current']))
 
+    if not elapsed:
+        raise ValueError("CSV contains no data rows.")
+
     container = QtWidgets.QWidget()
     vbox = QtWidgets.QVBoxLayout()
     vbox.setContentsMargins(0, 4, 0, 0)
@@ -195,6 +198,8 @@ def _build_image_comparison(filepath):
     vbox.addWidget(header)
 
     pixmap = QtGui.QPixmap(filepath)
+    if pixmap.isNull():
+        raise ValueError(f"Could not load image: {filepath}")
     img_label = QtWidgets.QLabel()
     img_label.setPixmap(
         pixmap.scaledToWidth(1200, QtCore.Qt.SmoothTransformation)
@@ -226,7 +231,7 @@ def load_comparison():
 
     fmt = _detect_format(filepath)
     if fmt is None:
-        status.setText("Unsupported file type.")
+        status.setText("Unsupported file type — previous comparison unchanged.")
         return
 
     _clear_comparison_widgets()
