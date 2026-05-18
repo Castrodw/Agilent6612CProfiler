@@ -148,6 +148,44 @@ def _detect_format(filepath):
         return 'image'
     return None
 
+def _build_csv_comparison(filepath):
+    import csv as _csv
+
+    elapsed, v_data, c_data = [], [], []
+    with open(filepath, newline='') as f:
+        for row in _csv.DictReader(f):
+            elapsed.append(float(row['elapsed_seconds']))
+            v_data.append(float(row['voltage']))
+            c_data.append(float(row['current']))
+
+    container = QtWidgets.QWidget()
+    vbox = QtWidgets.QVBoxLayout()
+    vbox.setContentsMargins(0, 4, 0, 0)
+
+    header = QtWidgets.QLabel(f"Comparison: {os.path.basename(filepath)}")
+    vbox.addWidget(header)
+
+    gw = pg.GraphicsLayoutWidget()
+    gw.setFixedHeight(400)
+
+    pv = gw.addPlot(title="Voltage (saved)")
+    pv.showGrid(x=True, y=True)
+    pv.setLabel('left', 'Voltage', units='V')
+    pv.getViewBox().setDefaultPadding(0.02)
+    pv.plot(elapsed, v_data, pen=pg.mkPen('m', width=2))
+
+    gw.nextRow()
+
+    pc = gw.addPlot(title="Current (saved)")
+    pc.showGrid(x=True, y=True)
+    pc.setLabel('left', 'Current', units='A')
+    pc.getViewBox().setDefaultPadding(0.02)
+    pc.plot(elapsed, c_data, pen=pg.mkPen(color=(255, 165, 0), width=2))
+
+    vbox.addWidget(gw)
+    container.setLayout(vbox)
+    return container
+
 def reset_graph():
     global start_time
     times.clear()
